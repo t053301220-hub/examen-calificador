@@ -108,7 +108,7 @@ if st.sidebar.button("🚀 Analizar con IA + n8n"):
         # --- Gráfico ---
         fig, ax = plt.subplots(figsize=(8, 4))
         ax.bar(df["nombre_pdf"], df["nota"], color="#4B9CD3")
-        ax.set_title("Distribución de notas (simulada con IA)", fontsize=12)
+        ax.set_title("Distribución de notas", fontsize=12)
         ax.set_ylabel("Nota (0-20)")
         ax.set_ylim(0, 20)
         ax.tick_params(axis='x', rotation=45)
@@ -161,3 +161,4 @@ if st.sidebar.button("🚀 Analizar con IA + n8n"):
         b64 = base64.b64encode(pdf_bytes).decode()
         href = f'<a href="data:application/pdf;base64,{b64}" download="Reporte_Resultados.pdf">📥 Descargar PDF</a>'
         st.markdown(href, unsafe_allow_html=True)
+
