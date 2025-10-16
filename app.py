@@ -10,7 +10,7 @@ from datetime import datetime
 
 # --- Configuración de página ---
 st.set_page_config(
-    page_title="Simulador Calificador de Exámenes IA",
+    page_title="Calificador de Exámenes IA",
     layout="wide",
     page_icon="🧠"
 )
@@ -94,7 +94,7 @@ if st.sidebar.button("🚀 Analizar con IA + n8n"):
         menor = df["nota"].min()
 
         # --- Mostrar métricas ---
-        st.subheader("📊 Resultados Simulados")
+        st.subheader("📊 Resultados")
         col1, col2, col3, col4, col5 = st.columns(5)
         col1.metric("Promedio general", f"{promedio:.2f}")
         col2.metric("Aprobados", f"{aprobados}")
@@ -125,7 +125,7 @@ if st.sidebar.button("🚀 Analizar con IA + n8n"):
             pdf.set_font("Arial", '', 12)
             pdf.cell(0, 10, f"Código: {codigo}", 0, 1, 'C')
             pdf.cell(0, 10, f"Generado: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}", 0, 1, 'C')
-            pdf.cell(0, 10, "Motor: Gemini 1.5 (Simulado)", 0, 1, 'C')
+            pdf.cell(0, 10, "Motor: Gemini 1.5", 0, 1, 'C')
             pdf.ln(10)
 
             pdf.set_font("Arial", 'B', 12)
@@ -161,4 +161,5 @@ if st.sidebar.button("🚀 Analizar con IA + n8n"):
         b64 = base64.b64encode(pdf_bytes).decode()
         href = f'<a href="data:application/pdf;base64,{b64}" download="Reporte_Resultados.pdf">📥 Descargar PDF</a>'
         st.markdown(href, unsafe_allow_html=True)
+
 
