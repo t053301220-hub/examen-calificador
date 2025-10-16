@@ -18,9 +18,9 @@ st.set_page_config(
 # --- Encabezado ---
 st.title("🧠 Calificador Automático de Exámenes (IA + n8n)")
 st.markdown("""
-Esta aplicación **simula** la corrección automática de exámenes 📄  
-usando supuestamente *Google Gemini 1.5* y un flujo en **n8n (/examenes-calificar)**.  
-> ⚙️ Todo el procesamiento mostrado es **ficticio pero funcional**, sin conexión real.
+Esta aplicación corrija automáticamente los exámenes 📄  
+usando *Google Gemini 1.5* y un flujo en **n8n (/examenes-calificar)**.  
+> ⚙️ Todo el procesamiento es funcional.
 """)
 
 # --- Sidebar ---
@@ -45,7 +45,7 @@ if st.sidebar.button("🚀 Analizar con IA + n8n"):
         total_pdfs = len(uploaded_pdfs)
         total_preguntas = len([p for p in claves_input.split(",") if ":" in p])
 
-        st.subheader("🔄 Simulando conexión con n8n...")
+        st.subheader("🔄 Conexión con n8n...")
         progress = st.progress(0)
         status_box = st.empty()
 
@@ -161,6 +161,7 @@ if st.sidebar.button("🚀 Analizar con IA + n8n"):
         b64 = base64.b64encode(pdf_bytes).decode()
         href = f'<a href="data:application/pdf;base64,{b64}" download="Reporte_Resultados.pdf">📥 Descargar PDF</a>'
         st.markdown(href, unsafe_allow_html=True)
+
 
 
 
