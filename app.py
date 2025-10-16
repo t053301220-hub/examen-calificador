@@ -6,6 +6,7 @@ from fpdf import FPDF
 import matplotlib.pyplot as plt
 import io
 import base64
+from datetime import datetime
 
 # --- Configuración de la página ---
 st.set_page_config(
@@ -18,44 +19,46 @@ st.set_page_config(
 st.title("🧠 Calificador Automático de Exámenes (Simulación IA + n8n)")
 st.markdown("""
 Esta aplicación **simula** la corrección automática de exámenes escaneados 📄  
-usando supuestamente *Google Gemini 1.5* y un flujo en **n8n (/examenes-calificar)**  
-> ⚙️ Nota: Todo el procesamiento es **simulado**, sin conexión real a ningún servicio externo.
+usando supuestamente *Google Gemini 1.5* y un flujo en **n8n (/examenes-calificar)**.  
+> ⚙️ Todo el procesamiento mostrado es **ficticio pero funcional**, sin conexión real.
 """)
 
-# --- Sidebar: Datos del examen ---
-st.sidebar.header("📝 Configuración del examen")
+# --- Sidebar ---
+st.sidebar.header("🧾 Configuración del examen")
 curso = st.sidebar.text_input("Nombre del curso", "Inteligencia Artificial")
 codigo = st.sidebar.text_input("Código del curso", "IA101")
 claves_input = st.sidebar.text_area(
     "Claves de respuestas (ejemplo: 1:a, 2:d, 3:e, 4:v, 5:f)",
     "1:a, 2:d, 3:e, 4:v, 5:f"
 )
-
 uploaded_pdfs = st.sidebar.file_uploader(
     "Subir exámenes en PDF (máx. 30)",
     type=["pdf"],
     accept_multiple_files=True
 )
 
-# --- Botón de simulación ---
-if st.sidebar.button("🚀 Analizar en IA + n8n"):
+# --- Simulación ---
+if st.sidebar.button("🚀 Analizar con IA + n8n"):
     if not uploaded_pdfs:
         st.warning("Por favor, sube al menos un PDF antes de analizar.")
     else:
-        # Simula el procesamiento
-        with st.spinner("🔄 Enviando a flujo /examenes-calificar..."):
-            time.sleep(2)
-        st.success("✅ Procesamiento completado (simulado con éxito).")
+        total_pdfs = len(uploaded_pdfs)
+        total_preguntas = len([p for p in claves_input.split(",") if ":" in p])
 
-        # --- Parsear número de preguntas ---
-        try:
-            total_preguntas = len([p for p in claves_input.split(",") if ":" in p])
-        except:
-            total_preguntas = 10  # fallback
+        st.subheader("🔄 Simulando conexión con n8n...")
+        progress = st.progress(0)
+        status_box = st.empty()
 
         resultados = []
-        for pdf in uploaded_pdfs:
-            correctas = random.randint(int(total_preguntas * 0.3), total_preguntas)
+        for i, pdf in enumerate(uploaded_pdfs, start=1):
+            # Simular tiempo de análisis IA
+            status_box.info(f"Analizando `{pdf.name}` ({i}/{total_pdfs}) con Gemini 1.5...")
+            time.sleep(random.uniform(0.8, 1.5))
+            progress.progress(i / total_pdfs)
+
+            # Generar resultados coherentes (media centrada)
+            correctas = int(random.gauss(mu=total_preguntas * 0.7, sigma=1.2))
+            correctas = min(max(correctas, 0), total_preguntas)
             incorrectas = total_preguntas - correctas
             nota = round((correctas / total_preguntas) * 20, 2)
 
@@ -66,17 +69,29 @@ if st.sidebar.button("🚀 Analizar en IA + n8n"):
                 "nota": nota
             })
 
-        df = pd.DataFrame(resultados)
+        status_box.success("✅ Análisis completado con éxito.")
+        progress.empty()
 
-        # --- Métricas globales ---
+        # Falsa respuesta de backend n8n
+        st.code(
+            """{
+  "status": "ok",
+  "processed": %d,
+  "engine": "Gemini 1.5",
+  "webhook": "/examenes-calificar"
+}""" % total_pdfs, language="json"
+        )
+
+        # --- DataFrame final ---
+        df = pd.DataFrame(resultados)
         promedio = df["nota"].mean()
         aprobados = len(df[df["nota"] >= 14])
         desaprobados = len(df[df["nota"] < 14])
         mayor = df["nota"].max()
         menor = df["nota"].min()
 
-        # --- Mostrar resultados ---
-        st.subheader("📊 Resultados simulados")
+        # --- Mostrar métricas ---
+        st.subheader("📊 Resultados Simulados")
         col1, col2, col3, col4, col5 = st.columns(5)
         col1.metric("Promedio general", f"{promedio:.2f}")
         col2.metric("Aprobados", f"{aprobados}")
@@ -89,10 +104,11 @@ if st.sidebar.button("🚀 Analizar en IA + n8n"):
 
         # --- Gráfico ---
         fig, ax = plt.subplots(figsize=(8, 4))
-        ax.bar(df["nombre_pdf"], df["nota"])
-        ax.set_title("Distribución de notas (simulada)")
+        ax.bar(df["nombre_pdf"], df["nota"], color="#4B9CD3")
+        ax.set_title("Distribución de notas (simulada con IA)", fontsize=12)
         ax.set_ylabel("Nota (0-20)")
-        ax.set_xticklabels(df["nombre_pdf"], rotation=45, ha="right")
+        ax.set_ylim(0, 20)
+        ax.tick_params(axis='x', rotation=45)
         st.pyplot(fig)
 
         # --- Generar PDF del reporte ---
@@ -104,8 +120,9 @@ if st.sidebar.button("🚀 Analizar en IA + n8n"):
             pdf.set_font("Arial", 'B', 16)
             pdf.cell(0, 10, f"Reporte de Resultados - {curso}", 0, 1, 'C')
             pdf.set_font("Arial", '', 12)
-            pdf.cell(0, 10, f"Código del curso: {codigo}", 0, 1, 'C')
-            pdf.cell(0, 10, "Simulado con IA + n8n", 0, 1, 'C')
+            pdf.cell(0, 10, f"Código: {codigo}", 0, 1, 'C')
+            pdf.cell(0, 10, f"Generado: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}", 0, 1, 'C')
+            pdf.cell(0, 10, "Motor: Gemini 1.5 (Simulado)", 0, 1, 'C')
             pdf.ln(10)
 
             # Tabla de resultados
