@@ -8,7 +8,7 @@ import io
 import base64
 from datetime import datetime
 
-# --- Configuración de la página ---
+# --- Configuración de página ---
 st.set_page_config(
     page_title="Simulador Calificador de Exámenes IA",
     layout="wide",
@@ -18,7 +18,7 @@ st.set_page_config(
 # --- Encabezado ---
 st.title("🧠 Calificador Automático de Exámenes (Simulación IA + n8n)")
 st.markdown("""
-Esta aplicación **simula** la corrección automática de exámenes escaneados 📄  
+Esta aplicación **simula** la corrección automática de exámenes 📄  
 usando supuestamente *Google Gemini 1.5* y un flujo en **n8n (/examenes-calificar)**.  
 > ⚙️ Todo el procesamiento mostrado es **ficticio pero funcional**, sin conexión real.
 """)
@@ -51,12 +51,15 @@ if st.sidebar.button("🚀 Analizar con IA + n8n"):
 
         resultados = []
         for i, pdf in enumerate(uploaded_pdfs, start=1):
-            # Simular tiempo de análisis IA
+            # Semilla para mantener consistencia por nombre de PDF
+            random.seed(pdf.name)
+
+            # Simular progreso
             status_box.info(f"Analizando `{pdf.name}` ({i}/{total_pdfs}) con Gemini 1.5...")
-            time.sleep(random.uniform(0.8, 1.5))
+            time.sleep(random.uniform(0.8, 1.4))
             progress.progress(i / total_pdfs)
 
-            # Generar resultados coherentes (media centrada)
+            # Generar resultados coherentes
             correctas = int(random.gauss(mu=total_preguntas * 0.7, sigma=1.2))
             correctas = min(max(correctas, 0), total_preguntas)
             incorrectas = total_preguntas - correctas
@@ -125,7 +128,6 @@ if st.sidebar.button("🚀 Analizar con IA + n8n"):
             pdf.cell(0, 10, "Motor: Gemini 1.5 (Simulado)", 0, 1, 'C')
             pdf.ln(10)
 
-            # Tabla de resultados
             pdf.set_font("Arial", 'B', 12)
             pdf.cell(80, 10, "Nombre del PDF", 1)
             pdf.cell(30, 10, "Correctas", 1)
@@ -151,12 +153,11 @@ if st.sidebar.button("🚀 Analizar con IA + n8n"):
             pdf.cell(0, 8, f"Mayor nota: {mayor:.2f}", 0, 1)
             pdf.cell(0, 8, f"Menor nota: {menor:.2f}", 0, 1)
 
-            pdf_output = io.BytesIO()
-            pdf.output(pdf_output)
-            pdf_output.seek(0)
-            return pdf_output
+            # Generar bytes del PDF correctamente
+            pdf_bytes = pdf.output(dest='S').encode('latin-1')
+            return pdf_bytes
 
         pdf_bytes = generar_pdf()
-        b64 = base64.b64encode(pdf_bytes.read()).decode()
-        href = f'<a href="data:application/octet-stream;base64,{b64}" download="Reporte_Resultados.pdf">📥 Descargar PDF</a>'
+        b64 = base64.b64encode(pdf_bytes).decode()
+        href = f'<a href="data:application/pdf;base64,{b64}" download="Reporte_Resultados.pdf">📥 Descargar PDF</a>'
         st.markdown(href, unsafe_allow_html=True)
