@@ -145,3 +145,93 @@ class ReportGenerator:
                 f"{resultado['nota']:.2f}",
                 resultado['estado']
             ])
+        
+        tabla_notas = Table(tabla_notas_data, colWidths=[0.5*inch, 2.5*inch, 1*inch, 1*inch, 0.8*inch, 1.2*inch])
+        
+        table_style = [
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1e3a8a')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 11),
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ]
+        
+        for idx, resultado in enumerate(resultados_ordenados, 1):
+            if resultado['estado'] == 'Aprobado':
+                table_style.append(('BACKGROUND', (0, idx), (-1, idx), colors.HexColor('#d1fae5')))
+            else:
+                table_style.append(('BACKGROUND', (0, idx), (-1, idx), colors.HexColor('#fecaca')))
+        
+        tabla_notas.setStyle(TableStyle(table_style))
+        story.append(tabla_notas)
+        story.append(Spacer(1, 0.3*inch))
+        
+        story.append(self._crear_grafico_barras(resultados_ordenados[:10]))
+        story.append(Spacer(1, 0.2*inch))
+        
+        footer = Paragraph(
+            f"<i>Reporte generado automáticamente por Sistema de Calificación v1.0 | Powered by Google Gemini 1.5</i>",
+            self.styles['Normal']
+        )
+        story.append(Spacer(1, 0.3*inch))
+        story.append(footer)
+        
+        doc.build(story)
+        buffer.seek(0)
+        return buffer
+    
+    def _crear_grafico_pastel(self, aprobados, desaprobados):
+        drawing = Drawing(400, 200)
+        
+        pie = Pie()
+        pie.x = 150
+        pie.y = 50
+        pie.width = 150
+        pie.height = 150
+        pie.data = [aprobados, desaprobados]
+        pie.labels = ['Aprobados', 'Desaprobados']
+        pie.slices.strokeWidth = 0.5
+        pie.slices[0].fillColor = colors.HexColor('#10b981')
+        pie.slices[1].fillColor = colors.HexColor('#ef4444')
+        
+        drawing.add(pie)
+        
+        return drawing
+    
+    def _crear_grafico_barras(self, resultados):
+        if len(resultados) == 0:
+            return Spacer(1, 0)
+        
+        drawing = Drawing(500, 250)
+        
+        bc = VerticalBarChart()
+        bc.x = 50
+        bc.y = 50
+        bc.height = 150
+        bc.width = 400
+        
+        data_to_plot = resultados[:10] if len(resultados) > 10 else resultados
+        
+        bc.data = [[r['nota'] for r in data_to_plot]]
+        bc.categoryAxis.categoryNames = [r['nombre'][:10] + '...' if len(r['nombre']) > 10 else r['nombre'] for r in data_to_plot]
+        bc.categoryAxis.labels.angle = 45
+        bc.categoryAxis.labels.fontSize = 8
+        bc.valueAxis.valueMin = 0
+        bc.valueAxis.valueMax = 20
+        bc.valueAxis.valueStep = 5
+        
+        for i, resultado in enumerate(data_to_plot):
+            if resultado['nota'] >= 14:
+                bc.bars[0][i].fillColor = colors.HexColor('#10b981')
+            else:
+                bc.bars[0][i].fillColor = colors.HexColor('#ef4444')
+        
+        drawing.add(bc)
+        
+        return drawing
